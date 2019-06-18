@@ -16,10 +16,6 @@
 
 package org.springframework.web.servlet.mvc.method.annotation;
 
-import java.beans.PropertyEditor;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.core.MethodParameter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.util.StringUtils;
@@ -34,6 +30,10 @@ import org.springframework.web.method.annotation.RequestParamMapMethodArgumentRe
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.View;
+
+import java.beans.PropertyEditor;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Resolves method arguments annotated with an @{@link PathVariable}.
@@ -78,6 +78,7 @@ public class PathVariableMethodArgumentResolver extends AbstractNamedValueMethod
 
 	@Override
 	protected NamedValueInfo createNamedValueInfo(MethodParameter parameter) {
+		//获取注解的内的参数 创建 NameValueInfo
 		PathVariable annotation = parameter.getParameterAnnotation(PathVariable.class);
 		return new PathVariableNamedValueInfo(annotation);
 	}

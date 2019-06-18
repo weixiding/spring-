@@ -16,16 +16,16 @@
 
 package org.springframework.web.servlet.view;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.Ordered;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.PatternMatchUtils;
 import org.springframework.web.servlet.View;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Simple implementation of the {@link org.springframework.web.servlet.ViewResolver}
@@ -81,6 +81,14 @@ import org.springframework.web.servlet.View;
  * @see org.springframework.web.servlet.view.velocity.VelocityView
  * @see org.springframework.web.servlet.view.freemarker.FreeMarkerView
  */
+
+
+/*
+	重写了父类的三个方法:
+		protected Object getCacheKey
+		protected View createView
+		protected View loadView
+*/
 public class UrlBasedViewResolver extends AbstractCachingViewResolver implements Ordered {
 
 	/**
@@ -131,6 +139,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * @see AbstractUrlBasedView
 	 */
 	public void setViewClass(Class<?> viewClass) {
+		//判断设置的视图是否支持
 		if (viewClass == null || !requiredViewClass().isAssignableFrom(viewClass)) {
 			throw new IllegalArgumentException(
 					"Given view class [" + (viewClass != null ? viewClass.getName() : null) +
@@ -375,8 +384,11 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * This implementation returns just the view name,
 	 * as this ViewResolver doesn't support localized resolution.
 	 */
+
+	//直接返回 view Name
 	@Override
 	protected Object getCacheKey(String viewName, Locale locale) {
+
 		return viewName;
 	}
 
@@ -392,8 +404,11 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	protected View createView(String viewName, Locale locale) throws Exception {
 		// If this resolver is not supposed to handle the given view,
 		// return null to pass on to the next resolver in the chain.
+
+		//检查是否支持此逻辑视图，可以配置支持的模型
 		if (!canHandle(viewName, locale)) {
 			return null;
+
 		}
 		// Check for special "redirect:" prefix.
 		if (viewName.startsWith(REDIRECT_URL_PREFIX)) {
@@ -406,7 +421,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 			String forwardUrl = viewName.substring(FORWARD_URL_PREFIX.length());
 			return new InternalResourceView(forwardUrl);
 		}
-		// Else fall back to superclass implementation: calling loadView.
+		// 如果以上都不是的话调用 父类的createView，继而简介调用loadView方法
 		return super.createView(viewName, locale);
 	}
 
@@ -442,8 +457,11 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 */
 	@Override
 	protected View loadView(String viewName, Locale locale) throws Exception {
+		//使用buildView创建视图
 		AbstractUrlBasedView view = buildView(viewName);
+		//使用applyLifecycleMethods方法对视图进行初始化
 		View result = applyLifecycleMethods(viewName, view);
+		//检查view对应的模板是否存在，如果存在则将初始化的视图返回，否则返回null交给下一个视图解析器
 		return (view.checkResource(locale) ? result : null);
 	}
 
@@ -466,9 +484,10 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * @see #loadView(String, java.util.Locale)
 	 */
 	protected AbstractUrlBasedView buildView(String viewName) throws Exception {
+		//getViewClass 中 viewClass可以通过在子类中设置
 		AbstractUrlBasedView view = (AbstractUrlBasedView) BeanUtils.instantiateClass(getViewClass());
 		view.setUrl(getPrefix() + viewName + getSuffix());
-
+		//如果contentType 不为null  则给view进行配置
 		String contentType = getContentType();
 		if (contentType != null) {
 			view.setContentType(contentType);
@@ -476,7 +495,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 
 		view.setRequestContextAttribute(getRequestContextAttribute());
 		view.setAttributesMap(getAttributesMap());
-
+		//是否让view  使用pathVariables  ,如果是则设置进去
 		Boolean exposePathVariables = getExposePathVariables();
 		if (exposePathVariables != null) {
 			view.setExposePathVariables(exposePathVariables);

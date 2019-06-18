@@ -16,29 +16,15 @@
 
 package org.springframework.core;
 
+import org.springframework.util.Assert;
+
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.util.Assert;
-
 /**
- * Helper class that encapsulates the specification of a method parameter, i.e.
- * a Method or Constructor plus a parameter index and a nested type index for
- * a declared generic type. Useful as a specification object to pass along.
- *
- * @author Juergen Hoeller
- * @author Rob Harrop
- * @author Andy Clement
- * @since 2.0
- * @see GenericCollectionTypeResolver
+ * 方法的参数，只要有了 method 和参数的位置，我们就可以解析任何想要的跟参数相关的信息了
  */
 public class MethodParameter {
 
@@ -53,7 +39,7 @@ public class MethodParameter {
 	private volatile Type genericParameterType;
 
 	private volatile Annotation[] parameterAnnotations;
-
+	//因为在反射机制中是不能够知道参数名的，所以使用它来解析参数名称
 	private volatile ParameterNameDiscoverer parameterNameDiscoverer;
 
 	private volatile String parameterName;

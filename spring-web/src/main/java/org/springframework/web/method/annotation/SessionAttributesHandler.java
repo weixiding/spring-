@@ -16,33 +16,19 @@
 
 package org.springframework.web.method.annotation;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionAttributeStore;
-import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.context.request.WebRequest;
 
-/**
- * Manages controller-specific session attributes declared via
- * {@link SessionAttributes @SessionAttributes}. Actual storage is
- * delegated to a {@link SessionAttributeStore} instance.
- *
- * <p>When a controller annotated with {@code @SessionAttributes} adds
- * attributes to its model, those attributes are checked against names and
- * types specified via {@code @SessionAttributes}. Matching model attributes
- * are saved in the HTTP session and remain there until the controller calls
- * {@link SessionStatus#setComplete()}.
- *
- * @author Rossen Stoyanchev
- * @since 3.1
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+/*
+knownAttributeNames 参数的设置在两个位置 ：  1  在初始化的时候   2 在 isHandlerSessionAttribute 中,
+在 retrieveAttributes的时候会调用isHandlerSessionAttribute  ，如果是type类型的 则回见该类型的参数的名字传递进去
+
  */
 public class SessionAttributesHandler {
 
@@ -50,30 +36,28 @@ public class SessionAttributesHandler {
 
 	private final Set<Class<?>> attributeTypes = new HashSet<Class<?>>();
 
-	// using a ConcurrentHashMap as a Set
+	// 该参数的设置在两个位置 ：  1  在初始化的时候   2 在 isHandlerSessionAttribute 中,,该属性的作用是检索工具，可以快速的查找或删除
 	private final Map<String, Boolean> knownAttributeNames = new ConcurrentHashMap<String, Boolean>(4);
 
 	private final SessionAttributeStore sessionAttributeStore;
 
 
 	/**
-	 * Create a new instance for a controller type. Session attribute names and
-	 * types are extracted from the {@code @SessionAttributes} annotation, if
-	 * present, on the given type.
-	 * @param handlerType the controller type
-	 * @param sessionAttributeStore used for session access
+	 *
 	 */
 	public SessionAttributesHandler(Class<?> handlerType, SessionAttributeStore sessionAttributeStore) {
 		Assert.notNull(sessionAttributeStore, "SessionAttributeStore may not be null.");
 		this.sessionAttributeStore = sessionAttributeStore;
-
+		//在这个handler类中找到一个注释 @SessionAttributes
 		SessionAttributes annotation = AnnotationUtils.findAnnotation(handlerType, SessionAttributes.class);
 		if (annotation != null) {
+			//使用注释中的value  和 type给属性赋值
 			this.attributeNames.addAll(Arrays.asList(annotation.value()));
 			this.attributeTypes.addAll(Arrays.<Class<?>>asList(annotation.types()));
 		}
 
 		for (String attributeName : this.attributeNames) {
+			//设置已知的属性名称
 			this.knownAttributeNames.put(attributeName, Boolean.TRUE);
 		}
 	}
@@ -87,15 +71,7 @@ public class SessionAttributesHandler {
 	}
 
 	/**
-	 * Whether the attribute name or type match the names and types specified
-	 * via {@code @SessionAttributes} in underlying controller.
-	 *
-	 * <p>Attributes successfully resolved through this method are "remembered"
-	 * and subsequently used in {@link #retrieveAttributes(WebRequest)} and
-	 * {@link #cleanupAttributes(WebRequest)}.
-	 *
-	 * @param attributeName the attribute name to check, never {@code null}
-	 * @param attributeType the type for the attribute, possibly {@code null}
+	 *用于判断 是否需要缓存，如果需要的话返回true 并将参数名称放入 knownAttributeNames中
 	 */
 	public boolean isHandlerSessionAttribute(String attributeName, Class<?> attributeType) {
 		Assert.notNull(attributeName, "Attribute name must not be null");
@@ -109,16 +85,14 @@ public class SessionAttributesHandler {
 	}
 
 	/**
-	 * Store a subset of the given attributes in the session. Attributes not
-	 * declared as session attributes via {@code @SessionAttributes} are ignored.
-	 * @param request the current request
-	 * @param attributes candidate attributes for session storage
+	 * 对外的保存 session attribute 的方法
 	 */
 	public void storeAttributes(WebRequest request, Map<String, ?> attributes) {
 		for (String name : attributes.keySet()) {
 			Object value = attributes.get(name);
 			Class<?> attrType = (value != null) ? value.getClass() : null;
 
+			//调用他来判断是否要缓存 ，如果是的话，进行参数名称的缓存,,
 			if (isHandlerSessionAttribute(name, attrType)) {
 				this.sessionAttributeStore.storeAttribute(request, name, value);
 			}
@@ -126,11 +100,7 @@ public class SessionAttributesHandler {
 	}
 
 	/**
-	 * Retrieve "known" attributes from the session, i.e. attributes listed
-	 * by name in {@code @SessionAttributes} or attributes previously stored
-	 * in the model that matched by type.
-	 * @param request the current request
-	 * @return a map with handler session attributes, possibly empty
+	 * 获取 session attribute 的属性,,通过 knownAttributeNames进行全部的检索
 	 */
 	public Map<String, Object> retrieveAttributes(WebRequest request) {
 		Map<String, Object> attributes = new HashMap<String, Object>();
@@ -144,10 +114,7 @@ public class SessionAttributesHandler {
 	}
 
 	/**
-	 * Remove "known" attributes from the session, i.e. attributes listed
-	 * by name in {@code @SessionAttributes} or attributes previously stored
-	 * in the model that matched by type.
-	 * @param request the current request
+	 * 通过knownAttributeNames检索进行全部的删除
 	 */
 	public void cleanupAttributes(WebRequest request) {
 		for (String attributeName : this.knownAttributeNames.keySet()) {
@@ -156,10 +123,7 @@ public class SessionAttributesHandler {
 	}
 
 	/**
-	 * A pass-through call to the underlying {@link SessionAttributeStore}.
-	 * @param request the current request
-	 * @param attributeName the name of the attribute of interest
-	 * @return the attribute value or {@code null}
+	 * 内部方法
 	 */
 	Object retrieveAttribute(WebRequest request, String attributeName) {
 		return this.sessionAttributeStore.retrieveAttribute(request, attributeName);

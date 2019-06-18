@@ -26,6 +26,12 @@ import org.springframework.web.context.request.NativeWebRequest;
  * @author Arjen Poutsma
  * @since 3.1
  */
+
+/*
+	1将相应的参数添加到 model中
+	2设置 view
+	3如果请求已经处理完成则设置model and view container的requestHhandled为true
+ */
 public interface HandlerMethodReturnValueHandler {
 
 	/**

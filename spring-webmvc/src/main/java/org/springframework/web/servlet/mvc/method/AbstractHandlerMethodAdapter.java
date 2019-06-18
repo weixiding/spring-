@@ -55,18 +55,12 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 
 	/**
-	 * This implementation expects the handler to be an {@link HandlerMethod}.
-	 * @param handler the handler instance to check
-	 * @return whether or not this adapter can adapt the given handler
+	 * hander是 hadlerMethod类型的参数 && supportsInternal返回的值    在子类实现中默认为ture
 	 */
 	public final boolean supports(Object handler) {
 		return (handler instanceof HandlerMethod && supportsInternal((HandlerMethod) handler));
 	}
 
-	/**
-	 *
-	 */
-	protected abstract boolean supportsInternal(HandlerMethod handlerMethod);
 
 	/**
 	 *
@@ -77,11 +71,7 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 		return handleInternal(request, response, (HandlerMethod) handler);
 	}
 
-	/**
-	 * 具体的请求处理交给子类去实现
-	 */
-	protected abstract ModelAndView handleInternal(HttpServletRequest request,
-			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception;
+
 
 	/**
 	 *
@@ -91,8 +81,20 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 	}
 
 	/**
+	 * 具体的请求处理交给子类去实现
+	 */
+	protected abstract ModelAndView handleInternal(HttpServletRequest request,
+												   HttpServletResponse response, HandlerMethod handlerMethod) throws Exception;
+
+	/**
 	 *
 	 */
 	protected abstract long getLastModifiedInternal(HttpServletRequest request, HandlerMethod handlerMethod);
+
+
+	/**
+	 *
+	 */
+	protected abstract boolean supportsInternal(HandlerMethod handlerMethod);
 
 }

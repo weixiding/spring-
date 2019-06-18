@@ -123,11 +123,11 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 	/**
 	 * 为什么会调用这个方法呢，这是应为我们实现的父类中继承了applicationcontext 的aware接口，也就是会调用setapplicaiton'方法
-	 * 这个方法会回调initApplicationContext方法，进行我们的初始化工作
+	 * 这个方法会回调initApplicationContext方法，进行我们的初始化工作,在这里重写了父类的方法
 	 */
 	@Override
 	protected void initApplicationContext() throws BeansException {
-		//抽象方法，供子类实现以扩展Interceptors
+		//抽象方法，供子类实现,用于子类添加拦截器
 		extendInterceptors(this.interceptors);
 		//用于将spring mvc的容器和父容器中的所有mappedInterceptor类型的bean添加到mappedInterceptors属性中去
 		detectMappedInterceptors(this.mappedInterceptors);

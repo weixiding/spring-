@@ -160,6 +160,10 @@ public class DispatcherServlet extends FrameworkServlet {
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
 		// by application developers.
+
+
+
+		///DispatcherServlet.properties
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
 			//在这里初始化的defaultStrategies方法
@@ -248,7 +252,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	protected void initStrategies(ApplicationContext context) {
-		/**
+		/**doService
 		 * 这一步可以说是初始化dispatcher Servlet，我们从ioc容器中查找指定的bean，如果有的话就将其设置为我们的属性
 		 * 没有的话就从DispatcherServlet.properties配置文件读取class并反射创建，并放入属性中去
 		 */
@@ -290,7 +294,6 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 		catch (NoSuchBeanDefinitionException ex) {
-			// We need to use the default.
 			//我们重点看看这个方法的实现机制
 			this.localeResolver = getDefaultStrategy(context, LocaleResolver.class);
 			if (logger.isDebugEnabled()) {
@@ -788,7 +791,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 
-		// 渲染页面
+		// 渲染页面,,,这一步很重要
 		if (mv != null && !mv.wasCleared()) {
 			render(mv, request, response);
 			if (errorView) {
@@ -965,13 +968,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
-	 * Render the given ModelAndView.
-	 * <p>This is the last stage in handling a request. It may involve resolving the view by name.
-	 * @param mv the ModelAndView to render
-	 * @param request current HTTP servlet request
-	 * @param response current HTTP servlet response
-	 * @throws ServletException if view is missing or cannot be resolved
-	 * @throws Exception if there's a problem rendering the view
+	 * R渲染视图页面
 	 */
 	protected void render(ModelAndView mv, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		// Determine locale for request and apply it to the response.
@@ -981,8 +978,8 @@ public class DispatcherServlet extends FrameworkServlet {
 		View view;
 		//如果我们的view是String类型的话，就解释为真正的视图
 		if (mv.isReference()) {
-			// We need to resolve the view name.
-			view = resolveViewName(mv.getViewName(), mv.getModelInternal(), locale, request);
+			// We need to resolve the view name.进行视图的解析工作
+			view = resolveViewName(mv.getViewName(),/*model*/ mv.getModelInternal(), locale, request);
 			if (view == null) {
 				throw new ServletException("Could not resolve view with name '" + mv.getViewName() +
 						"' in servlet with name '" + getServletName() + "'");
@@ -1002,7 +999,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			logger.debug("Rendering view [" + view + "] in DispatcherServlet with name '" + getServletName() + "'");
 		}
 		try {
-			//进行具体的渲染工作,具体使用到了themere solver
+			//进行具体的渲染工作
 			view.render(mv.getModelInternal(), request, response);
 		}
 		catch (Exception ex) {
@@ -1040,7 +1037,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 */
 	protected View resolveViewName(String viewName, Map<String, Object> model, Locale locale,
 			HttpServletRequest request) throws Exception {
-
+		//这里使用的是 InternalResourceViewResolver
 		for (ViewResolver viewResolver : this.viewResolvers) {
 			View view = viewResolver.resolveViewName(viewName, locale);
 			if (view != null) {

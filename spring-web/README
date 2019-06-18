@@ -1,0 +1,57 @@
+AbstractMessageConverterMethodArgumentResolver 使用HttpMessageConverter解析来自request body参数值的基类.
+
+--AbstractMessageConverterMethodProcessor 添加返回值处理,所以改名了
+
+----HttpEntityMethodProcessor 解析参数时,只处理HttpEntity;处理返回值时支持HttpEntity和ResponseEntity.
+
+----RequestResponseBodyMethodProcessor 使用HttpMessageConverter解析@RequestBody参数;处理使用@ResponseBody的返回值
+
+--RequestPartMethodArgumentResolver 解析使用@RequestPart,@RequestParam注解的参数;MultipartFile和Part的子类参数
+
+AbstractNamedValueMethodArgumentResolver 解析named vlaue类型参数(其实就是键值对).
+
+--AbstractCookieValueMethodArgumentResolver 解析使用@CookieValue注解的参数
+
+----ServletCookieValueMethodArgumentResolver 从HttpServletRequest中解析出cookie值
+
+--ExpressionValueMethodArgumentResolver 解析@Value注解的参数
+
+--MatrixVariableMethodArgumentResolver 解析@MatrixVariable注解的参数,不包括map类型
+
+--PathVariableMethodArgumentResolver 解析使用@PathVariable注解的参数,从uri中解析参数
+
+--RequestHeaderMethodArgumentResolver 解析使用@RequestHeader注解的参数,不包括map类型
+
+--RequestParamMethodArgumentResolver 解析从request流中获取值的参数,如@RequestParam,MultipartFile,Part,默认使用时解析基本参数.
+
+AbstractWebArgumentResolverAdapter 使用@WebArgumentResolver的基类,用于向后兼容.适配WebArgumentResolver
+
+--ServletWebArgumentResolverAdapter 新建NativeWebRequest--
+
+ErrorsMethodArgumentResolver 处理Errors子类参数
+
+MapMethodProcessor 处理map类型参数
+
+MatrixVariableMapMethodArgumentResolver 使用@MatrixVariable注解的map类型参数
+
+ModelAttributeMethodProcessor 解析使用@ModelAttribute注解参数
+
+--ServletModelAttributeMethodProcessor 使用ServletRequestDataBinder解析参数
+
+ModelMethodProcessor 处理model类型参数
+
+PathVariableMapMethodArgumentResolver 处理使用@PathVariable注解的map参数
+
+RedirectAttributesMethodArgumentResolver 处理RedirectAttributes类型参数
+
+RequestHeaderMapMethodArgumentResolver 处理使用@RequestHeader注解的map参数
+
+RequestParamMapMethodArgumentResolver 处理使用@RequestParam注解的map参数
+
+ServletRequestMethodArgumentResolver 处理request相关的参数:WebRequest,ServletRequest,MultipartRequest,HttpSession,Principal,Locale,InputStream,Reader
+
+ServletResponseMethodArgumentResolver 解析response相关的参数:ServletResponse,OutputStream,Writer
+
+SessionStatusMethodArgumentResolver 处理SessionStatus类型参数
+
+UriComponentsBuilderMethodArgumentResolver 处理UriComponentsBuilder类型参数

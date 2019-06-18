@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 异常处理解析的类
+ *
+ * 异常解析主要包含两部分内容，1 给 modelAndView 设置内容 2 设置 response 的相关内容
  */
 public interface HandlerExceptionResolver {
 

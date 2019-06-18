@@ -109,9 +109,9 @@ public abstract class HttpServletBean extends HttpServlet
 			logger.debug("Initializing servlet '" + getServletName() + "'");
 		}
 
-		// 这是web.xml 中配置的参数，我们获取过来，配置bean,requiredProperties中的时必须要配置的参数如果没有配置则
-		//报异常
+
 		try {
+			// 这是web.xml 中配置的参数，我们获取过来，配置bean,requiredProperties中的是必须要配置的参数如果没有配置则报异常
 			PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 			//BeanWrappers是spring 提供的一个用来操作java bean 属性的工具,使用它可以直接修改一个对象的属性 ,理解了这个下面
 			//这个代码就ok了
@@ -145,7 +145,7 @@ public abstract class HttpServletBean extends HttpServlet
 			ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
 
 			bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
-			//模板方法，在子类中实现做一些初始化工作 ， bw 代表dispatcherservlet
+			//模板方法，在子类中实现做一些初始化工作
 			initBeanWrapper(bw);
 
 			//将配置的初始化设置到dispatcher servlet中

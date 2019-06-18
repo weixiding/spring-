@@ -1,0 +1,33 @@
+description = "using-springmvc"
+apply plugin: "java"
+apply plugin: "war"
+apply plugin: 'jetty'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+
+dependencies {
+    //spring 的核心模块
+    compile(project(":spring-aop"))  // for JaxWsPortProxyFactoryBean
+    compile(project(":spring-beans"))  // for MultipartFilter
+    compile(project(":spring-context"))
+    compile(project(":spring-core"))
+    compile(project(":spring-tx"))
+    //web 模块
+    compile(project(":spring-web"))
+    compile(project(":spring-webmvc"))
+
+
+    providedCompile 'javax.servlet:servlet-api:2.5',
+            'javax.servlet.jsp:jsp-api:2.1'
+    runtime 'javax.servlet:jstl:1.1.2',
+            'taglibs:standard:1.1.2'
+}
+
+
+jettyRun {
+    httpPort = 8000
+}

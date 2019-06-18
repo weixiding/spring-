@@ -401,7 +401,6 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * same active logical session. However, this is not guaranteed across
 	 * different servlet containers; the only 100% safe way is a session mutex.
 	 * @see org.springframework.web.util.HttpSessionMutexListener
-	 * @see org.springframework.web.util.WebUtils#getSessionMutex(javax.servlet.http.HttpSession)
 	 */
 	public void setSynchronizeOnSession(boolean synchronizeOnSession) {
 		this.synchronizeOnSession = synchronizeOnSession;
@@ -440,10 +439,10 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		注释的类相关的modelAttributeAdivceCache initBinderAdivceCache 和 该属性在spring mvc 4.1之后出现的responseBodyAdvice这六个属性
 	 */
 	public void afterPropertiesSet() {
-
-		//用于给处理器方法和注释了@modelAttribute的方法设置参数
-		if (this.argumentResolvers == null) {
+		if(this.argumentResolvers == null) {
+			//用于给处理器方法和注释了@modelAttribute的方法设置参数
 			List<HandlerMethodArgumentResolver> resolvers = getDefaultArgumentResolvers();
+			//使用责任链模式
 			this.argumentResolvers = new HandlerMethodArgumentResolverComposite().addResolvers(resolvers);
 		}
 		//用于给注释了@InitBinder的方法设置参数
@@ -624,6 +623,12 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 
 	/*
+
+		大概执行目标如下：
+						备好处理器所需要的参数
+						使用处理器处理请求
+						处理返回值，即统一处理成ModelAndView类型
+
 		该方法执行handler的调用,,核心方法有两个 1) checkAndPrepare, 2)invokeHandleMethod
 		我们看到有两种不同的情况，如果synchronizeOnSession属性设置为true,则对session同步，否则不同步。
 	 */
@@ -634,7 +639,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		//判断handler是否有@SessionAttributes注释的参数，，看该方法的实现
 		if (getSessionAttributesHandler(handlerMethod).hasSessionAttributes()) {
 			// 有@SessionAttributes 的话组织浏览器缓存
-			checkAndPrepare(request, response, this.cacheSecondsForSessionAttributeHandlers, true);
+			checkAndPrepare(request, response, /* 值为）*/this.cacheSecondsForSessionAttributeHandlers, true);
 		}
 		else {
 
@@ -716,16 +721,26 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 				ServletInvocableHandlerMethod：实际请求的处理就是通过他来执行的，参数绑定、处理请求以及返回值处理都在他里边完成
 		 */
 		WebDataBinderFactory binderFactory = getDataBinderFactory(handlerMethod);
+
+		//因为我们需要使用 data binder 对象 帮助我们进行string 到 其他类型的转化工作
 		ModelFactory modelFactory = getModelFactory(handlerMethod, binderFactory);
 
 		ServletInvocableHandlerMethod requestMappingMethod = createRequestMappingMethod(handlerMethod, binderFactory);
 
-		//创建传递参数的ModleAndViewContiner容器  ,用于传递参数
+		//该容器箱单于一个传送带，各个模块对他进行操作，更改值，直到最后
 		ModelAndViewContainer mavContainer = new ModelAndViewContainer();
+
+		/*
+
+			model 的初始化
+		 */
+
+
 		//将FlashMap中的数据设置到 model中
 		mavContainer.addAllAttributes(RequestContextUtils.getInputFlashMap(request));
 		//使用 modelFactory 将sessionAttribute和注释了 @modelAttribute  的参数设置到 model中
 		modelFactory.initModel(webRequest, mavContainer, requestMappingMethod);
+
 		mavContainer.setIgnoreDefaultModelOnRedirect(this.ignoreDefaultModelOnRedirect);
 
 		AsyncWebRequest asyncWebRequest = WebAsyncUtils.createAsyncWebRequest(request, response);
@@ -814,7 +829,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 		Class<?> handlerType = handlerMethod.getBeanType();
 
-		//
+		//handler bean 方法内部的initBinder方法
 		Set<Method> methods = this.initBinderCache.get(handlerType);
 		//如果没有，则查找并设置缓存
 		if (methods == null) {
@@ -874,6 +889,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			ModelFactory modelFactory, NativeWebRequest webRequest) throws Exception {
 		//更新model
 		modelFactory.updateModel(webRequest, mavContainer);
+		//已经处理完成的话直接返回null
 		if (mavContainer.isRequestHandled()) {
 			return null;
 		}

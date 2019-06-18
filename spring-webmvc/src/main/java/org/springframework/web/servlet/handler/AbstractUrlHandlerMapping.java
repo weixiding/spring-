@@ -66,6 +66,8 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 	 */
 	@Override
 	protected Object getHandlerInternal(HttpServletRequest request) throws Exception {
+
+		//获取当前请求的路径
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 
 		//获取handler的工程就比较复杂了
@@ -151,7 +153,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 			validateHandler(handler, request);
 			String pathWithinMapping = getPathMatcher().extractPathWithinPattern(bestPatternMatch, urlPath);
 
-			// 有可能取不出最优的，这里进行处理
+			// 有可能取不出最优的，这里进行处理,,解析 url中对应的变量的值
 			Map<String, String> uriTemplateVariables = new LinkedHashMap<String, String>();
 			for (String matchingPattern : matchingPatterns) {
 				if (patternComparator.compare(bestPatternMatch, matchingPattern) == 0) {
@@ -219,7 +221,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	/**
-	 *将一个url映射到一个处理器
+	 *在map中注册一个url映射到一个处理器
 	 */
 	protected void registerHandler(String urlPath, Object handler) throws BeansException, IllegalStateException {
 		Assert.notNull(urlPath, "URL path must not be null");

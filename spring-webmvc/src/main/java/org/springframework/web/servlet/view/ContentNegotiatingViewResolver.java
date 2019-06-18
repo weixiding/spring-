@@ -16,21 +16,6 @@
 
 package org.springframework.web.servlet.view;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import javax.activation.FileTypeMap;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactoryUtils;
@@ -53,6 +38,12 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.SmartView;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
+
+import javax.activation.FileTypeMap;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 
 /**
  * Implementation of {@link ViewResolver} that resolves a view based on the request file name or {@code Accept} header.
@@ -86,6 +77,12 @@ import org.springframework.web.servlet.ViewResolver;
  * @see ViewResolver
  * @see InternalResourceViewResolver
  * @see BeanNameViewResolver
+ */
+
+
+/*
+
+	在别的解析器的结果上，增加对 mediaType和后缀的支持,这不是重点
  */
 public class ContentNegotiatingViewResolver extends WebApplicationObjectSupport implements ViewResolver, Ordered, InitializingBean {
 

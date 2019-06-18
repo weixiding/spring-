@@ -1,25 +1,5 @@
-/*
- * Copyright 2002-2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 package org.springframework.web.servlet.mvc.method.annotation;
-
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
@@ -34,21 +14,18 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.View;
 import org.springframework.web.util.NestedServletException;
 
-/**
- * Extends {@link InvocableHandlerMethod} with the ability to handle return
- * values through a registered {@link HandlerMethodReturnValueHandler} and
- * also supports setting the response status based on a method-level
- * {@code @ResponseStatus} annotation.
- *
- * <p>A {@code null} return value (including void) may be interpreted as the
- * end of request processing in combination with a {@code @ResponseStatus}
- * annotation, a not-modified check condition
- * (see {@link ServletWebRequest#checkNotModified(long)}), or
- * a method argument that provides access to the response stream.
- *
- * @author Rossen Stoyanchev
- * @since 3.1
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+
+/*
+
+	对 @responseStatus 注释的支持
+	对返回值的处理
+	对异步处理结果的处理
  */
+
 public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 
 	private HttpStatus responseStatus;
@@ -91,21 +68,17 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	}
 
 	/**
-	 * Invokes the method and handles the return value through a registered
-	 * {@link HandlerMethodReturnValueHandler}.
-	 *
-	 * @param webRequest the current request
-	 * @param mavContainer the ModelAndViewContainer for this request
-	 * @param providedArgs "given" arguments matched by type, not resolved
+	 * 该方法核心处理逻辑是 调用returnValueHandlers.handleReturnValue 进行处理
 	 */
 	public final void invokeAndHandle(ServletWebRequest webRequest,
 			ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
 
 		Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
-
+		//处理 @responseStatus 注释
 		setResponseStatus(webRequest);
 
 		if (returnValue == null) {
+			//如果返回值为null 并且 其中任意条件为其中任意一个直接返回
 			if (isRequestNotModified(webRequest) || hasResponseStatus() || mavContainer.isRequestHandled()) {
 				mavContainer.setRequestHandled(true);
 				return;
@@ -144,7 +117,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			webRequest.getResponse().setStatus(this.responseStatus.value());
 		}
 
-		// to be picked up by the RedirectView
+		// 设置在request中的属性，为了在 redirect中使用
 		webRequest.getRequest().setAttribute(View.RESPONSE_STATUS_ATTRIBUTE, this.responseStatus);
 	}
 

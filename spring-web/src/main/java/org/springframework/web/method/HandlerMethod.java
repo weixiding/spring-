@@ -16,12 +16,8 @@
 
 package org.springframework.web.method;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.MethodParameter;
@@ -29,18 +25,13 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+
 /**
- * Encapsulates information about a handler method consisting of a {@linkplain #getMethod() method}
- * and a {@linkplain #getBean() bean}. Provides convenient access to method parameters,
- * method return value, method annotations.
- *
- * <p>The class may be created with a bean instance or with a bean name (e.g. lazy-init bean,
- * prototype bean). Use {@link #createWithResolvedBean()} to obtain a {@link HandlerMethod}
- * instance with a bean instance resolved through the associated {@link BeanFactory}.
- *
- * @author Arjen Poutsma
- * @author Rossen Stoyanchev
- * @since 3.1
+ * 有两个内部类：
+ * 	一个封装方法调用的参数   HandlerMethodParameter
+ * 	一个封装方法返回的参数   ReturnValueMethodParameter
  */
 public class HandlerMethod {
 
@@ -100,6 +91,7 @@ public class HandlerMethod {
 		this.beanFactory = beanFactory;
 		this.method = method;
 		this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
+		//在此处给属性 parameters 赋值
 		this.parameters = initMethodParameters();
 	}
 
@@ -249,6 +241,7 @@ public class HandlerMethod {
 	 */
 	private class HandlerMethodParameter extends MethodParameter {
 
+		//在此处给paramter属性初始化时赋的值
 		public HandlerMethodParameter(int index) {
 			super(HandlerMethod.this.bridgedMethod, index);
 		}

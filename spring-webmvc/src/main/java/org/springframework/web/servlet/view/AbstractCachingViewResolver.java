@@ -16,30 +16,20 @@
 
 package org.springframework.web.servlet.view;
 
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.web.context.support.WebApplicationObjectSupport;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Convenient base class for {@link org.springframework.web.servlet.ViewResolver}
- * implementations. Caches {@link org.springframework.web.servlet.View} objects
- * once resolved: This means that view resolution won't be a performance problem,
- * no matter how costly initial view retrieval is.
- *
- * <p>Subclasses need to implement the {@link #loadView} template method,
- * building the View object for a specific view name and locale.
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
- * @see #loadView
- */
+ 	视图解析的重点分析对象
+*/
 public abstract class AbstractCachingViewResolver extends WebApplicationObjectSupport implements ViewResolver {
 
 	/** Default maximum number of entries for the view cache: 1024 */
@@ -138,18 +128,24 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	}
 
 
+
+	/*
+			解析视图的方法
+	 */
 	public View resolveViewName(String viewName, Locale locale) throws Exception {
 		if (!isCache()) {
+			//如果禁止缓存的话，就直接创建视图
 			return createView(viewName, locale);
 		}
 		else {
+			//生成视图在map中的key
 			Object cacheKey = getCacheKey(viewName, locale);
 			View view = this.viewAccessCache.get(cacheKey);
 			if (view == null) {
 				synchronized (this.viewCreationCache) {
 					view = this.viewCreationCache.get(cacheKey);
 					if (view == null) {
-						// Ask the subclass to create the View object.
+						// 创建视图对象
 						view = createView(viewName, locale);
 						if (view == null && this.cacheUnresolved) {
 							view = UNRESOLVED_VIEW;
@@ -238,6 +234,7 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	 * @see #loadView
 	 */
 	protected View createView(String viewName, Locale locale) throws Exception {
+		//调用 loadView方法，，，子类中实现
 		return loadView(viewName, locale);
 	}
 

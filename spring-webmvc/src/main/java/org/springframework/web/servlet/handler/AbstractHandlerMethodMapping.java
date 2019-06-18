@@ -83,6 +83,16 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		for (String beanName : beanNames) {
 
 			//判断他是不是handler 类的对象,抽象方法，交给子类去实现
+
+
+			/*
+
+			@Override
+			protected boolean isHandler(Class<?> beanType) {
+				return ((AnnotationUtils.findAnnotation(beanType, Controller.class) != null) ||
+						(AnnotationUtils.findAnnotation(beanType, RequestMapping.class) != null));
+			}
+			 */
 			if (isHandler(getApplicationContext().getType(beanName))){
 
 				//解析其中的HandlerMethod进行注册
@@ -114,6 +124,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		//因为有些是CGLIB代理生成的，获取真实的类
 		final Class<?> userType = ClassUtils.getUserClass(handlerType);
 
+
+		//找到符合条件的method
+		//HandlerMethodSelector 的selectMethods 方法会遍历handler的所有方法，并根据methodfilter 来匹配方法
 		Set<Method> methods = HandlerMethodSelector.selectMethods(userType, new MethodFilter() {
 			public boolean matches(Method method) {
 				//模板方法获取handlerMethod的mapping属性
@@ -240,11 +253,11 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		//Match是一个内部类，保存 匹配条件和handler
 		List<Match> matches = new ArrayList<Match>();
 
-		//找到该路径所匹配的匹配条件的列表
+		//找到该路径所匹配的匹配条件的列表,,获取到多个request Condition
 		List<T> directPathMatches = this.urlMap.get(lookupPath);
 
 		if (directPathMatches != null) {
-
+			//将 符合筛选条件的 request condition 和handlermethod 封装为Match
 			addMatchingMappings(directPathMatches, matches, request);
 		}
 		if (matches.isEmpty()) {

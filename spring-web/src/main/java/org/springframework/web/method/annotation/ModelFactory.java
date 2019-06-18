@@ -16,40 +16,32 @@
 
 package org.springframework.web.method.annotation;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.Conventions;
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.MethodParameter;
-import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.HttpSessionRequiredException;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.method.support.InvocableHandlerMethod;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 /**
- * Provides methods to initialize the {@link Model} before controller method
- * invocation and to update it afterwards. On initialization, the model is
- * populated with attributes from the session or by invoking
- * {@code @ModelAttribute} methods. On update, model attributes are
- * synchronized with the session -- either adding or removing them.
- * Also {@link BindingResult} attributes where missing.
- *
- * @author Rossen Stoyanchev
- * @since 3.1
+ *包含两个功能：
+ * 	1 初始化 model
+ * 	2 处理器执行后将model中响应的参数更新到session attribute中
  */
 public final class ModelFactory {
 
@@ -74,30 +66,24 @@ public final class ModelFactory {
 	}
 
 	/**
-	 * Populate the model in the following order:
-	 * <ol>
-	 * 	<li>Retrieve "known" session attributes -- i.e. attributes listed via
-	 * 	{@link SessionAttributes @SessionAttributes} and previously stored in
-	 * 	the in the model at least once
-	 * 	<li>Invoke {@link ModelAttribute @ModelAttribute} methods
-	 * 	<li>Find method arguments eligible as session attributes and retrieve
-	 * 	them if they're not	already	present in the model
-	 * </ol>
-	 * @param request the current request
-	 * @param mavContainer contains the model to be initialized
-	 * @param handlerMethod the method for which the model is initialized
-	 * @throws Exception may arise from {@code @ModelAttribute} methods
+	 * 	初始化 model
+	 * 		从sessionAttributesHandler中初始化
+	 * 		从	@modelAttribute注释的方法中初始化
+	 * 		从	释了 @@modelAttribute 又在 @sessionAttribute 中的参数初始化
 	 */
 	public void initModel(NativeWebRequest request, ModelAndViewContainer mavContainer, HandlerMethod handlerMethod)
 			throws Exception {
-
+		//从 session attribute 中取出参数 保存到ModelAndViewContainer 中
 		Map<String, ?> attributesInSession = this.sessionAttributesHandler.retrieveAttributes(request);
 		mavContainer.mergeAttributes(attributesInSession);
 
+		//调用 @modelAttribute 注解的方法并将结果设置到model中
 		invokeModelAttributeMethods(request, mavContainer);
 
+		//遍历即注释了 @@modelAttribute 又在 @sessionAttribute 中的参数
 		for (String name : findSessionAttributeArguments(handlerMethod)) {
 			if (!mavContainer.containsAttribute(name)) {
+				//注意这个是从全局的session中获取的
 				Object value = this.sessionAttributesHandler.retrieveAttribute(request, name);
 				if (value == null) {
 					throw new HttpSessionRequiredException("Expected session attribute '" + name + "'");
@@ -108,21 +94,22 @@ public final class ModelFactory {
 	}
 
 	/**
-	 * Invoke model attribute methods to populate the model. Attributes are
-	 * added only if not already present in the model.
+	 *
 	 */
 	private void invokeModelAttributeMethods(NativeWebRequest request, ModelAndViewContainer mavContainer)
 			throws Exception {
 
 		for (InvocableHandlerMethod attrMethod : this.attributeMethods) {
 			String modelName = attrMethod.getMethodAnnotation(ModelAttribute.class).value();
+			//如果参数名已经在其中 ，则跳过
 			if (mavContainer.containsAttribute(modelName)) {
 				continue;
 			}
-
+			//执行方法
 			Object returnValue = attrMethod.invokeForRequest(request, mavContainer);
 
 			if (!attrMethod.isVoid()){
+				//解析即将放入到 mavcontainer 中的属性的名称
 				String returnValueName = getNameForReturnValue(returnValue, attrMethod.getReturnType());
 				if (!mavContainer.containsAttribute(returnValueName)) {
 					mavContainer.addAttribute(returnValueName, returnValue);
@@ -139,6 +126,8 @@ public final class ModelFactory {
 		List<String> result = new ArrayList<String>();
 		for (MethodParameter param : handlerMethod.getMethodParameters()) {
 			if (param.hasParameterAnnotation(ModelAttribute.class)) {
+
+				//重点关注的方法
 				String name = getNameForParameter(param);
 				if (this.sessionAttributesHandler.isHandlerSessionAttribute(name, param.getParameterType())) {
 					result.add(name);
@@ -149,25 +138,18 @@ public final class ModelFactory {
 	}
 
 	/**
-	 * Derive the model attribute name for the given return value using
-	 * one of the following:
-	 * <ol>
-	 * 	<li>The method {@code ModelAttribute} annotation value
-	 * 	<li>The declared return type if it is other than {@code Object}
-	 * 	<li>The actual return value type
-	 * </ol>
-	 * @param returnValue the value returned from a method invocation
-	 * @param returnType the return type of the method
-	 * @return the model name, never {@code null} nor empty
+	 * 获取参数名称的规则解析
 	 */
 	public static String getNameForReturnValue(Object returnValue, MethodParameter returnType) {
 		ModelAttribute annot = returnType.getMethodAnnotation(ModelAttribute.class);
 		if (annot != null && StringUtils.hasText(annot.value())) {
+			//如果设置了value  则直接将value 的值进行返回
 			return annot.value();
 		}
 		else {
 			Method method = returnType.getMethod();
 			Class<?> resolvedType = GenericTypeResolver.resolveReturnType(method, returnType.getDeclaringClass());
+			//如果是 type的话，进行解析
 			return Conventions.getVariableNameForReturnType(method, resolvedType, returnValue);
 		}
 	}
@@ -182,17 +164,15 @@ public final class ModelFactory {
 	 */
 	public static String getNameForParameter(MethodParameter parameter) {
 		ModelAttribute annot = parameter.getParameterAnnotation(ModelAttribute.class);
+		//如果是 @sessionAttribute 的value 中的值的话直接返回，如果的type 的话进行名称的解析
 		String attrName = (annot != null) ? annot.value() : null;
 		return StringUtils.hasText(attrName) ? attrName :  Conventions.getVariableNameForParameter(parameter);
 	}
 
 	/**
-	 * Synchronize model attributes with the session. Add {@link BindingResult}
-	 * attributes where necessary.
-	 * @param request the current request
-	 * @param mavContainer contains the model to update
-	 * @throws Exception if creating BindingResult attributes fails
-	 */
+	 *  1 对session进行设置
+	 *  2 判断请求是否已经处理完成或者是 redirect类型的返回值，其实就是判断需不需要进行页面渲染
+	 **/
 	public void updateModel(NativeWebRequest request, ModelAndViewContainer mavContainer) throws Exception {
 
 		if (mavContainer.getSessionStatus().isComplete()){
@@ -203,6 +183,7 @@ public final class ModelFactory {
 		}
 
 		if (!mavContainer.isRequestHandled()) {
+			//如果需要渲染   则给相应的参数设置binding Result
 			updateBindingResult(request, mavContainer.getModel());
 		}
 	}
@@ -214,7 +195,7 @@ public final class ModelFactory {
 		List<String> keyNames = new ArrayList<String>(model.keySet());
 		for (String name : keyNames) {
 			Object value = model.get(name);
-
+			//判断是否需要添加binding result
 			if (isBindingCandidate(name, value)) {
 				String bindingResultKey = BindingResult.MODEL_KEY_PREFIX + name;
 
@@ -230,15 +211,16 @@ public final class ModelFactory {
 	 * Whether the given attribute requires a {@link BindingResult} in the model.
 	 */
 	private boolean isBindingCandidate(String attributeName, Object value) {
+		//先判断是不是其他结果的 binding result ，通过参数名前缀判断
 		if (attributeName.startsWith(BindingResult.MODEL_KEY_PREFIX)) {
 			return false;
 		}
-
+		//判断是不是session管理的属性
 		Class<?> attrType = (value != null) ? value.getClass() : null;
 		if (this.sessionAttributesHandler.isHandlerSessionAttribute(attributeName, attrType)) {
 			return true;
 		}
-
+		//最后检查不是null 数组 集合 map 和基本数据类型的话返回 true
 		return (value != null && !value.getClass().isArray() && !(value instanceof Collection) &&
 				!(value instanceof Map) && !BeanUtils.isSimpleValueType(value.getClass()));
 	}

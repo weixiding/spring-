@@ -1,3 +1,4 @@
+//引入插件
 buildscript {
 	repositories {
 		maven { url "https://repo.spring.io/plugins-release" }
@@ -7,13 +8,15 @@ buildscript {
 		classpath("io.spring.gradle:docbook-reference-plugin:0.3.1")
 	}
 }
-
+//定义外部属性,值为所有子模块
 ext {
 	moduleProjects  = subprojects.findAll {
+		//找到所有子模块，name！= spring-build-src 或spring-framework-bom
 		!it.name.equals('spring-build-src') && !it.name.equals('spring-framework-bom')
 	}
 }
 
+//配置
 configure(allprojects) { project ->
 	group = "org.springframework"
 	version = qualifyVersionIfNecessary(version)
@@ -99,11 +102,15 @@ configure(allprojects) { project ->
 	] as String[]
 }
 
+
+//配置子工程选项
 configure(subprojects - project(":spring-build-src")) { subproject ->
 	apply plugin: "merge"
 	apply from: "${gradleScriptDir}/publish-maven.gradle"
 
+	//设置jar的任务属性
 	jar {
+		//设置载货清点内容
 		manifest.attributes["Created-By"] =
 			"${System.getProperty("java.version")} (${System.getProperty("java.specification.vendor")})"
 		manifest.attributes["Implementation-Title"] = subproject.name
@@ -133,19 +140,20 @@ configure(subprojects - project(":spring-build-src")) { subproject ->
 		logging.captureStandardError LogLevel.INFO
 		logging.captureStandardOutput LogLevel.INFO // suppress "## warnings" message
 	}
-
+	//定义源代码的jar 任务
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		classifier = 'sources'
 		from sourceSets.main.allSource
 		// don't include or exclude anything explicitly by default. See SPR-12085.
 	}
-
+	//java doc 的
 	task javadocJar(type: Jar) {
 		classifier = "javadoc"
 		from javadoc
 	}
 
 	artifacts {
+		//配置发布时执行的任务
 		archives sourcesJar
 		archives javadocJar
 	}
@@ -505,6 +513,9 @@ project("spring-web") {
 	// pick up ContextLoader.properties in src/main
 	sourceSets.main.resources.srcDirs += "src/main/java"
 }
+
+
+
 
 project("spring-orm") {
 	description = "Spring Object/Relational Mapping"

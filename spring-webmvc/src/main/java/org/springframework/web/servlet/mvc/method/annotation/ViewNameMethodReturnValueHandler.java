@@ -42,6 +42,7 @@ public class ViewNameMethodReturnValueHandler implements HandlerMethodReturnValu
 
 	public boolean supportsReturnType(MethodParameter returnType) {
 		Class<?> paramType = returnType.getParameterType();
+		//判断返回值类型是不是 void 或者 String
 		return (void.class.equals(paramType) || String.class.equals(paramType));
 	}
 

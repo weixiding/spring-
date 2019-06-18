@@ -362,7 +362,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 			cacheForSeconds(response, seconds, mustRevalidate);
 		}
 		else if (seconds == 0) {
-			//组织浏览器缓存
+			//阻止浏览器缓存
 			preventCaching(response);
 		}
 		// Leave caching to the client otherwise.

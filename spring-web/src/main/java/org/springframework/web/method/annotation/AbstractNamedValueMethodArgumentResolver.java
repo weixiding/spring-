@@ -27,6 +27,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ValueConstants;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -81,14 +82,20 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 			throws Exception {
 
 		Class<?> paramType = parameter.getParameterType();
+		//根据参数类型获取NamedValueInfo   例如  @PathVariable("username")  ==
+		//{"name" : username,"defaultValue" : defaultValue,"required" : true}
 		NamedValueInfo namedValueInfo = getNamedValueInfo(parameter);
-
-		Object arg = resolveName(namedValueInfo.name, parameter, webRequest);
+		//具体解析参数,模板方法
+		Object arg = resolveName( namedValueInfo.name, parameter, webRequest);
+		//没有解析到参数
 		if (arg == null) {
+
+			//判断是否包含默认值
 			if (namedValueInfo.defaultValue != null) {
 				arg = resolveDefaultValue(namedValueInfo.defaultValue);
 			}
 			else if (namedValueInfo.required) {
+				//模板方法
 				handleMissingValue(namedValueInfo.name, parameter);
 			}
 			arg = handleNullValue(namedValueInfo.name, arg, paramType);
@@ -96,7 +103,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		else if ("".equals(arg) && (namedValueInfo.defaultValue != null)) {
 			arg = resolveDefaultValue(namedValueInfo.defaultValue);
 		}
-
+		//如果binderFactory不为空，则用它创建binder并转化解析出的参数
 		if (binderFactory != null) {
 			WebDataBinder binder = binderFactory.createBinder(webRequest, null, namedValueInfo.name);
 			arg = binder.convertIfNecessary(arg, paramType, parameter);
@@ -113,6 +120,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	private NamedValueInfo getNamedValueInfo(MethodParameter parameter) {
 		NamedValueInfo namedValueInfo = this.namedValueInfoCache.get(parameter);
 		if (namedValueInfo == null) {
+			//缓存没有则创建,通过子类实现，因为  name 和 value的解析方式不同
 			namedValueInfo = createNamedValueInfo(parameter);
 			namedValueInfo = updateNamedValueInfo(parameter, namedValueInfo);
 			this.namedValueInfoCache.put(parameter, namedValueInfo);
@@ -210,11 +218,11 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	 * Represents the information about a named value, including name, whether it's required and a default value.
 	 */
 	protected static class NamedValueInfo {
-
+		//参数名
 		private final String name;
-
+		//是否必须
 		private final boolean required;
-
+		//默认值
 		private final String defaultValue;
 
 		protected NamedValueInfo(String name, boolean required, String defaultValue) {

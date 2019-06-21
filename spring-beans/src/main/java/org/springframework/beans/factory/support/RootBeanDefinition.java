@@ -16,16 +16,16 @@
 
 package org.springframework.beans.factory.support;
 
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.util.Assert;
+
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A root bean definition represents the merged bean definition that backs
@@ -59,15 +59,18 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	final Object constructorArgumentLock = new Object();
 
 	/** Package-visible field for caching the resolved constructor or factory method */
+	//缓存解析过的构造函数
 	Object resolvedConstructorOrFactoryMethod;
 
 	/** Package-visible field that marks the constructor arguments as resolved */
 	boolean constructorArgumentsResolved = false;
 
 	/** Package-visible field for caching fully resolved constructor arguments */
+	//存储构造函数的参数数组
 	Object[] resolvedConstructorArguments;
 
 	/** Package-visible field for caching partly prepared constructor arguments */
+	//预配置构造函数参数数组
 	Object[] preparedConstructorArguments;
 
 	final Object postProcessingLock = new Object();

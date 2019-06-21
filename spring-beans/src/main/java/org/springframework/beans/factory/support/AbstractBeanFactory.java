@@ -169,16 +169,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
-	 * 获取bean实例，在这里触发依赖注入功能
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> T doGetBean(
 			final String name, final Class<T> requiredType, final Object[] args, boolean typeCheckOnly)
 			throws BeansException {
-
+		//转化对应的bean name,传入的可能是   别名  或者factory bean
 		final String beanName = transformedBeanName(name);
 		Object bean;
-		//先从缓存中去查找是否有单例,处理 哪些已经被创建过的单件bean 对这种bean的请求不需要重复的创建
+		//获取单路对象，该方法解决了单例对象的循环依赖问题
 		Object sharedInstance = getSingleton(beanName);
 
 		//如果在缓存池中
@@ -198,47 +196,53 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		else {
-			// Fail if we're already creating this bean instance:
-			// We're assumably within a circular reference.
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
 
-			//判断bean的定义数据是否在工厂中存在
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
-				// 当前工厂没有包含bean的定义，则一次查看相关父容器中是否存在
+				// 当前工厂没有包含bean的定义，则依次查看相关父容器中是否存在
 				String nameToLookup = originalBeanName(name);
 				if (args != null) {
-					// Delegation to parent with explicit args.
 					return (T) parentBeanFactory.getBean(nameToLookup, args);
 				}
 				else {
-					// No args -> delegate to standard getBean method.
 					return parentBeanFactory.getBean(nameToLookup, requiredType);
 				}
 			}
-
+			/*
+				进行创建标记，以避免重复创建，并且后续会使用此标记信息，同时标记这个bean已经被创建了，即已经被getBean至少调用过一次了。
+			 */
 			if (!typeCheckOnly) {
 				markBeanAsCreated(beanName);
 			}
-			//如果本工厂中有该bean的beandefinition的话就进行创建
+
 			try {
+				//开始寻找bean定义信息，并针对bean定义进行验证
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
 				//获取当前bean的所有依赖bean这样会触发bean的依赖调用知道没有任何的bean的依赖关系
-				// Guarantee initialization of beans that the current bean depends on.
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dependsOnBean : dependsOn) {
+						/*
+							这里会触发对dependOn bean的创建。如A->B，表示A依赖于B，那么在创建A之前，必须保证B先被创建。
+							在创建了B之后，这里会进行依赖信息存储。
+							信息会存储于两个地方，一是dependentBeanMap，存储为B-A，表示B被A依赖。另一个是dependenciesForBeanMap，
+							存储为A－B，表示A依赖于B。这相当于是一个双向map，只不过通过两个map来存储。
+						 */
 						getBean(dependsOnBean);
+
 						registerDependentBean(dependsOnBean, beanName);
 					}
 				}
 
 				// 创建单例bean实例
 				if (mbd.isSingleton()) {
+
+					//bean 的加载过程
 					sharedInstance = getSingleton(beanName, new ObjectFactory<Object>() {
 						public Object getObject() throws BeansException {
 							try {
@@ -254,11 +258,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							}
 						}
 					});
+
+
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 				//创建Prototype bean 的地方
 				else if (mbd.isPrototype()) {
-					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
 						beforePrototypeCreation(beanName);
@@ -271,6 +276,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				else {
+
+					//指定的 scope 范围的bean的实例化
 					String scopeName = mbd.getScope();
 					final Scope scope = this.scopes.get(scopeName);
 					if (scope == null) {
@@ -1163,12 +1170,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
-	 * Check the given merged bean definition,
-	 * potentially throwing validation exceptions.
-	 * @param mbd the merged bean definition to check
-	 * @param beanName the name of the bean
-	 * @param args the arguments for bean creation, if any
-	 * @throws BeanDefinitionStoreException in case of validation failure
+	 * 里会对bean信息进行一个封装，主要是处理parent信息和scope信息。将这些信息进行一次定义融合。
+	 * 同时接下来对bean进行检查，首先这个bean不能是abstract的，因为abstract的bean定义不能被实例化，只能由其它bean继承。
+	 * 然后，在传递的参数不为null的情况下，要求只能处理prototype类型的bean。因为，如果不是prototype，无需传递参数，
+	 * 因为bean已经在第一次创建时确定，后续获取不能够改变原有bean信息。除了prototype类型才可以，后者为每一次请求都会创建新的对象。
 	 */
 	protected void checkMergedBeanDefinition(RootBeanDefinition mbd, String beanName, Object[] args)
 			throws BeanDefinitionStoreException {
@@ -1342,6 +1347,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	protected void markBeanAsCreated(String beanName) {
 		if (!this.alreadyCreated.containsKey(beanName)) {
+			//至少被getBean调用过一回了
 			this.alreadyCreated.put(beanName, Boolean.TRUE);
 		}
 	}
@@ -1401,6 +1407,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
+
+
+		//如果要获取bean factory 的话 直接返回
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}

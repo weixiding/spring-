@@ -148,10 +148,12 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
 
 			beanFactory.setSerializationId(getId());
+
+			//设置注解解析器 QualifierAnnotationAutowireCandidateResolver
 			customizeBeanFactory(beanFactory);
 
 			//载入bean,我们可以看到该方法是抽象的，所以又是模板设计模式，交给特定的子类实现,为什么又要交给子类去实现呢？
-			//应为我们的beandefine 可能不同,,也就是说该方法会创建reader对象
+			//应为我们的beandefinereder 可能不同,,也就是说该方法会创建reader对象
 			loadBeanDefinitions(beanFactory);
 
 

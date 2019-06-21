@@ -16,15 +16,11 @@
 
 package org.springframework.beans.factory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.BeansException;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.util.*;
 
 /**
  * Convenience methods operating on bean factories, in particular
@@ -70,6 +66,7 @@ public abstract class BeanFactoryUtils {
 	public static String transformedBeanName(String name) {
 		Assert.notNull(name, "'name' must not be null");
 		String beanName = name;
+		//去除 factoryBean 的修饰符，也就是如果name="&aa" 那么会出去 &
 		while (beanName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 			beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
 		}

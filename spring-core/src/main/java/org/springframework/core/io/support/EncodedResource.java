@@ -16,15 +16,15 @@
 
 package org.springframework.core.io.support;
 
+import org.springframework.core.io.Resource;
+import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-
-import org.springframework.core.io.Resource;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Holder that combines a {@link Resource} descriptor with a specific encoding
@@ -39,6 +39,13 @@ import org.springframework.util.ObjectUtils;
  * @see Resource#getInputStream()
  * @see java.io.Reader
  * @see java.nio.charset.Charset
+ */
+
+
+/*
+
+	装饰者设计模式
+	只要用来做流的编码工作
  */
 public class EncodedResource {
 
@@ -128,6 +135,11 @@ public class EncodedResource {
 	 * @throws IOException if opening the Reader failed
 	 * @see #requiresReader()
 	 * @see #getInputStream()
+	 */
+
+	/*
+
+
 	 */
 	public Reader getReader() throws IOException {
 		if (this.charset != null) {

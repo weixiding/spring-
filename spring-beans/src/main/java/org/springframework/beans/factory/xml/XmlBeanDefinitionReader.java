@@ -111,7 +111,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
 
 	private final XmlValidationModeDetector validationModeDetector = new XmlValidationModeDetector();
-
+	//利用该属性记录已经加载的资源
 	private final ThreadLocal<Set<EncodedResource>> resourcesCurrentlyBeingLoaded =
 			new NamedThreadLocal<Set<EncodedResource>>("XML bean definition resources currently being loaded");
 
@@ -242,14 +242,24 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * Return the EntityResolver to use, building a default resolver
 	 * if none specified.
 	 */
+
+
+	/*
+	EntityResolver	的作用是提供如何获取dtd声明的方式，这样可以避免通过网络下载dtd声明
+
+	 */
 	protected EntityResolver getEntityResolver() {
 		if (this.entityResolver == null) {
 			// Determine default EntityResolver to use.
 			ResourceLoader resourceLoader = getResourceLoader();
 			if (resourceLoader != null) {
+
+				//我们查看该类的实现方式 ,默认返回类型的extends DelegatingEntityResolver
 				this.entityResolver = new ResourceEntityResolver(resourceLoader);
 			}
 			else {
+
+
 				this.entityResolver = new DelegatingEntityResolver(getBeanClassLoader());
 			}
 		}
@@ -311,18 +321,22 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
 		try {
-			//后去io流
+			//获取io流
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {
+				/*
+				org.xml.sax			不懂的参见sax 解析xml
+				 */
 				InputSource inputSource = new InputSource(inputStream);
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
 
-				//
+				//进入真正的核心逻辑部分
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
+				//关闭流
 				inputStream.close();
 			}
 		}
@@ -369,11 +383,12 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
+			//获取xml的验证模式,即时 DTD 还是 XSD
 			int validationMode = getValidationModeForResource(resource);
 
-			//通过documentLoader来拿到xml文档的document
+			//通过documentLoader来拿到xml文档的document,真正的验证逻辑在此处进行
 			Document doc = this.documentLoader.loadDocument(
-					inputSource, getEntityResolver(), this.errorHandler, validationMode, isNamespaceAware());
+					inputSource,/*校验文档的获取方式*/ getEntityResolver(), /*错误处理*/this.errorHandler, /*校验模式*/validationMode, isNamespaceAware());
 
 
 			//这就是进行文档解析的详细过程的函数了
@@ -413,10 +428,12 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * mode, even when something other than {@link #VALIDATION_AUTO} was set.
 	 */
 	protected int getValidationModeForResource(Resource resource) {
+		//如果指定了检测模式，则使用指定的验证模式
 		int validationModeToUse = getValidationMode();
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+		//如果未指定则使用自动检测
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
@@ -455,6 +472,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		}
 
 		try {
+			//判断验证是 VALIDATION_DTD 还是 VALIDATION_XSD
 			return this.validationModeDetector.detectValidationMode(inputStream);
 		}
 		catch (IOException ex) {
@@ -483,7 +501,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		documentReader.setEnvironment(getEnvironment());
 		int countBefore = getRegistry().getBeanDefinitionCount();
-		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
+
+		//进行ban的注册
+		documentReader.registerBeanDefinitions(doc, /*创建一个上下文,很重要*/createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 
@@ -502,6 +522,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected XmlReaderContext createReaderContext(Resource resource) {
 		if (this.namespaceHandlerResolver == null) {
+			//这个属性用于加载解析自定义标签的处理器，就是在"META-INF/spring.handlers"; 这个路径下查找相关的标签解析器
 			this.namespaceHandlerResolver = createDefaultNamespaceHandlerResolver();
 		}
 		//在此处把我们reader所有的对象都添加到上下文供其使用

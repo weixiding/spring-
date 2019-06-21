@@ -16,16 +16,15 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * EntityResolver implementation for the Spring beans DTD,
@@ -49,7 +48,7 @@ public class BeansDtdResolver implements EntityResolver {
 
 	private static final Log logger = LogFactory.getLog(BeansDtdResolver.class);
 
-
+	//dtd 约束文档的加载
 	public InputSource resolveEntity(String publicId, String systemId) throws IOException {
 		if (logger.isTraceEnabled()) {
 			logger.trace("Trying to resolve XML entity with public ID [" + publicId +
@@ -65,6 +64,8 @@ public class BeansDtdResolver implements EntityResolver {
 						logger.trace("Trying to locate [" + dtdFile + "] in Spring jar");
 					}
 					try {
+
+						//dtdFile拼接出路径
 						Resource resource = new ClassPathResource(dtdFile, getClass());
 						InputSource source = new InputSource(resource.getInputStream());
 						source.setPublicId(publicId);

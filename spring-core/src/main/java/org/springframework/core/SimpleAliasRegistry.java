@@ -16,15 +16,15 @@
 
 package org.springframework.core;
 
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+import org.springframework.util.StringValueResolver;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-import org.springframework.util.StringValueResolver;
 
 /**
  * Simple implementation of the {@link AliasRegistry} interface.
@@ -145,6 +145,8 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * @param name the user-specified name
 	 * @return the transformed name
 	 */
+
+	//取出别名表示的真正的beanName
 	public String canonicalName(String name) {
 		String canonicalName = name;
 		// Handle aliasing...

@@ -28,6 +28,17 @@ import org.springframework.context.annotation.ComponentScanBeanDefinitionParser;
  * @author Juergen Hoeller
  * @since 2.5
  */
+
+
+/*
+
+		自定义标签处理器的大致流程为：
+			创建一个需要扩展的组件
+			穿件xsd文件描述组件内容
+			创建一个BeanDefinitionParser 实现类，解析xsd文件中定义和组件定义
+			创建一个handler文件，扩展自NamespaceHandlerSupport，目的是将组件注册到spring 容器
+			编写spring.handlers和 spring.schemas
+ */
 public class ContextNamespaceHandler extends NamespaceHandlerSupport {
 
 	public void init() {

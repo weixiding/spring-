@@ -121,6 +121,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Register each bean definition within the given root {@code <beans/>} element.
 	 */
 	protected void doRegisterBeanDefinitions(Element root) {
+		//处理profile属性
 		String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 		if (StringUtils.hasText(profileSpec)) {
 			String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -137,7 +138,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// then ultimately reset this.delegate back to its original (parent) reference.
 		// this behavior emulates a stack of delegates without actually necessitating one.
 
-
+		//专门处理解析
 		BeanDefinitionParserDelegate parent = this.delegate;
 
 		//创建一个delegate对象   BeanDefinitionParserDelegate
@@ -180,16 +181,20 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param root the DOM root element of the document
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
+		//对beans进行处理
 		if (delegate.isDefaultNamespace(root)) {
 			NodeList nl = root.getChildNodes();
 			for (int i = 0; i < nl.getLength(); i++) {
 				Node node = nl.item(i);
 				if (node instanceof Element) {
 					Element ele = (Element) node;
+					//实现是判断node的命名空间是否是http://www.springframework.org/schema/beans进行判断
 					if (delegate.isDefaultNamespace(ele)) {
+
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -201,6 +206,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
@@ -322,6 +328,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		//解析完成的bean definition            //具体的解析工作
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+
+			//bean 的子元素使用的时自定义标签的话，需要进行的工作
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// 进行bean definition的注册工作

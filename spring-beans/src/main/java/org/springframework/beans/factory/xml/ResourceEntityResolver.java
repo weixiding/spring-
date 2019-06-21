@@ -16,18 +16,17 @@
 
 package org.springframework.beans.factory.xml;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
 /**
  * EntityResolver implementation that tries to resolve entity references
@@ -72,6 +71,7 @@ public class ResourceEntityResolver extends DelegatingEntityResolver {
 	@Override
 	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
 		InputSource source = super.resolveEntity(publicId, systemId);
+		//如果加载不到在指定下面的
 		if (source == null && systemId != null) {
 			String resourcePath = null;
 			try {

@@ -431,6 +431,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			//此时的beanfactory已经准备就绪了
 			//执行容器的初始化工作
+			//对bean factory进行各种功能的填充工作
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
 
@@ -599,6 +600,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<BeanFactoryPostProcessor>();
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessors =
 					new LinkedList<BeanDefinitionRegistryPostProcessor>();
+
+			//找到所有的BeanFactoryPostProcessor
 			for (BeanFactoryPostProcessor postProcessor : getBeanFactoryPostProcessors()) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryPostProcessor =

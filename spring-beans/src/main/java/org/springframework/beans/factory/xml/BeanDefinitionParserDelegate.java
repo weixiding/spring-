@@ -413,15 +413,17 @@ public class BeanDefinitionParserDelegate {
 	 * 元素的解析工作  <bean><bean/>
 	 */
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, BeanDefinition containingBean) {
+		//解析id 属性
 		String id = ele.getAttribute(ID_ATTRIBUTE);
+		//解析name，name 就是别名
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
-
+		//分割name属性
 		List<String> aliases = new ArrayList<String>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
-
+		//id 就是bean的name
 		String beanName = id;
 		if (!StringUtils.hasText(beanName) && !aliases.isEmpty()) {
 			beanName = aliases.remove(0);
@@ -430,17 +432,20 @@ public class BeanDefinitionParserDelegate {
 						"' as bean name and " + aliases + " as aliases");
 			}
 		}
-
+        //判断bean的名称是否重复定义
 		if (containingBean == null) {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
-		//这个地方是对bean元素的详细解析：
+		/*
+		    以上只是对bean 的id 和name 的解析工作，更详细的工作交给下面函数解析
+		 */
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 
 		if (beanDefinition != null) {
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
+					    //如果不存在beanname  那么根据spring的命名规则生成bean name
 						beanName = BeanDefinitionReaderUtils.generateBeanName(
 								beanDefinition, this.readerContext.getRegistry(), true);
 					}
@@ -467,6 +472,7 @@ public class BeanDefinitionParserDelegate {
 				}
 			}
 			String[] aliasesArray = StringUtils.toStringArray(aliases);
+			//创建BeanDefinitionHolder
 			return new BeanDefinitionHolder(beanDefinition, beanName, aliasesArray);
 		}
 
@@ -506,12 +512,12 @@ public class BeanDefinitionParserDelegate {
 			Element ele, String beanName, BeanDefinition containingBean) {
 
 		this.parseState.push(new BeanEntry(beanName));
-
+        //解析class属性
 		String className = null;
 		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
 			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
 		}
-
+        //解析parent 属性
 		try {
 			String parent = null;
 			if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
@@ -1416,11 +1422,21 @@ public class BeanDefinitionParserDelegate {
 
 	public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
 		String namespaceUri = getNamespaceURI(ele);
+		/*
+			根据命名空间找到对应的handler,文件为spring.handlers
+				http\://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler
+				http\://www.springframework.org/schema/jee=org.springframework.ejb.config.JeeNamespaceHandler
+				http\://www.springframework.org/schema/lang=org.springframework.scripting.config.LangNamespaceHandler
+				http\://www.springframework.org/schema/task=org.springframework.scheduling.config.TaskNamespaceHandler
+				http\://www.springframework.org/schema/cache=org.springframework.cache.config.CacheNamespaceHandler
+		 */
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
 			return null;
 		}
+
+		//解析自定义标签
 		return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
 	}
 
@@ -1453,11 +1469,14 @@ public class BeanDefinitionParserDelegate {
 
 	private BeanDefinitionHolder decorateIfRequired(
 			Node node, BeanDefinitionHolder originalDef, BeanDefinition containingBd) {
-
+		//获取自定义标签的命名空间
 		String namespaceUri = getNamespaceURI(node);
+
 		if (!isDefaultNamespace(namespaceUri)) {
+			//根据命名空间找到对应的处理器
 			NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 			if (handler != null) {
+				//进行修饰
 				return handler.decorate(node, originalDef, new ParserContext(this.readerContext, this, containingBd));
 			}
 			else if (namespaceUri != null && namespaceUri.startsWith("http://www.springframework.org/")) {

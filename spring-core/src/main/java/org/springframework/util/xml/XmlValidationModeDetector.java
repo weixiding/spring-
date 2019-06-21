@@ -16,13 +16,9 @@
 
 package org.springframework.util.xml;
 
-import java.io.BufferedReader;
-import java.io.CharConversionException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import org.springframework.util.StringUtils;
+
+import java.io.*;
 
 /**
  * Detects whether an XML stream is using DTD- or XSD-based validation.
@@ -92,8 +88,10 @@ public class XmlValidationModeDetector {
 		try {
 			boolean isDtdValidated = false;
 			String content;
+			//循环遍历每一行xml文件
 			while ((content = reader.readLine()) != null) {
 				content = consumeCommentTokens(content);
+				//如果是注释或者空行则跳过
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
@@ -101,6 +99,8 @@ public class XmlValidationModeDetector {
 					isDtdValidated = true;
 					break;
 				}
+
+				//是否是开始标签
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
@@ -147,6 +147,7 @@ public class XmlValidationModeDetector {
 	 * the DOCTYPE declaration or the root element of the document.
 	 */
 	private String consumeCommentTokens(String line) {
+		//如果不是注释就返回该行
 		if (!line.contains(START_COMMENT) && !line.contains(END_COMMENT)) {
 			return line;
 		}

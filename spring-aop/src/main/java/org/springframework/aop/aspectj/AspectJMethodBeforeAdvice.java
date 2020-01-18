@@ -16,9 +16,9 @@
 
 package org.springframework.aop.aspectj;
 
-import java.lang.reflect.Method;
-
 import org.springframework.aop.MethodBeforeAdvice;
+
+import java.lang.reflect.Method;
 
 /**
  * Spring AOP advice that wraps an AspectJ before method.
@@ -36,6 +36,7 @@ public class AspectJMethodBeforeAdvice extends AbstractAspectJAdvice implements 
 	}
 
 	public void before(Method method, Object[] args, Object target) throws Throwable {
+		//增强的逻辑调用
 		invokeAdviceMethod(getJoinPointMatch(), null, null);
 	}
 

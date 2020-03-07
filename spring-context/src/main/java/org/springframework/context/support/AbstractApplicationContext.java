@@ -431,7 +431,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			//此时的beanfactory已经准备就绪了
 			//执行容器的初始化工作
-			//对bean factory进行各种功能的填充工作
+			//对bean factory进行各种功能的填充工作,只是进行bean defination 的加载工作
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
 
@@ -601,9 +601,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessors =
 					new LinkedList<BeanDefinitionRegistryPostProcessor>();
 
-			//找到所有的BeanFactoryPostProcessor
+			//供applicaiton 中去取所有的BeanFactoryPostProcessor 分类填充到两个集合registryPostProcessors,regularPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : getBeanFactoryPostProcessors()) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
+
 					BeanDefinitionRegistryPostProcessor registryPostProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
 					registryPostProcessor.postProcessBeanDefinitionRegistry(registry);
@@ -613,14 +614,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 					regularPostProcessors.add(postProcessor);
 				}
 			}
+			//在从bean工厂中加载BeanDefinitionRegistryPostProcessor
 			Map<String, BeanDefinitionRegistryPostProcessor> beanMap =
 					beanFactory.getBeansOfType(BeanDefinitionRegistryPostProcessor.class, true, false);
+
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessorBeans =
 					new ArrayList<BeanDefinitionRegistryPostProcessor>(beanMap.values());
+
 			OrderComparator.sort(registryPostProcessorBeans);
 			for (BeanDefinitionRegistryPostProcessor postProcessor : registryPostProcessorBeans) {
+				//进行相关bean的注册操作
 				postProcessor.postProcessBeanDefinitionRegistry(registry);
 			}
+
 			invokeBeanFactoryPostProcessors(registryPostProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(registryPostProcessorBeans, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
@@ -696,7 +702,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when
-		// a bean is created during BeanPostProcessor instantiation, i.e. when
+		// a bean is created during BeanPostProImportBeanDefinitionRegistrarcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));

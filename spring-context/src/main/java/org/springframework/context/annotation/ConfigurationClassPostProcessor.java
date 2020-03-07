@@ -221,7 +221,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					"postProcessBeanFactory already called for this post-processor against " + registry);
 		}
 		this.registriesPostProcessed.add(registryId);
-
+		//跳转到这里
 		processConfigBeanDefinitions(registry);
 	}
 
@@ -245,13 +245,16 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	}
 
 	/**
-	 * Build and validate a configuration model based on the registry of
-	 * {@link Configuration} classes.
+	 * 其简单的逻辑即是遍列整个容器bean列表,找出有@Configuration注解的bean,排序,
+	 * 解析此bean,扫描其上的各个注解,然后读取bean定义.重复这个过程,直到所有configBean均处理完毕.
 	 */
 	public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
+		//加载当前已知所有bean定义
 		Set<BeanDefinitionHolder> configCandidates = new LinkedHashSet<BeanDefinitionHolder>();
+
 		for (String beanName : registry.getBeanDefinitionNames()) {
 			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
+			////过滤出要处理的configBean,通过ConfigurationClassUtils.checkConfigurationClassCandidate判定
 			if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
 				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
 			}
@@ -277,6 +280,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		ConfigurationClassParser parser = new ConfigurationClassParser(
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
+
+
+
 		for (BeanDefinitionHolder holder : configCandidates) {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
@@ -291,6 +297,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				throw new BeanDefinitionStoreException("Failed to load bean class: " + bd.getBeanClassName(), ex);
 			}
 		}
+
+		//验证解析
 		parser.validate();
 
 		// Handle any @PropertySource annotations
@@ -314,6 +322,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					registry, this.sourceExtractor, this.problemReporter, this.metadataReaderFactory,
 					this.resourceLoader, this.environment, this.importBeanNameGenerator);
 		}
+
+		//导入其中定义的bean
 		this.reader.loadBeanDefinitions(parser.getConfigurationClasses());
 
 		// Register the ImportRegistry as a bean in order to support ImportAware @Configuration classes

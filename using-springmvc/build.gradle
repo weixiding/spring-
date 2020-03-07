@@ -2,6 +2,18 @@ description = "using-springmvc"
 apply plugin: "java"
 apply plugin: "war"
 apply plugin: 'jetty'
+buildDir = 'target'
+//定义目录结构    
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
 
 repositories {
     mavenLocal()

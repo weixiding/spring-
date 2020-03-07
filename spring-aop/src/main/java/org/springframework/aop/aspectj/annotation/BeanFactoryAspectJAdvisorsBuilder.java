@@ -16,18 +16,13 @@
 
 package org.springframework.aop.aspectj.annotation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import org.aspectj.lang.reflect.PerClauseKind;
-
 import org.springframework.aop.Advisor;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.util.Assert;
+
+import java.util.*;
 
 /**
  * Helper for retrieving @AspectJ beans from a BeanFactory and building
@@ -83,6 +78,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 		List<String> aspectNames = null;
 
 		synchronized (this) {
+			//存放的是所有的aspect 注解的bean的名字
 			aspectNames = this.aspectBeanNames;
 			if (aspectNames == null) {
 				List<Advisor> advisors = new LinkedList<Advisor>();
@@ -100,14 +96,20 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 					if (beanType == null) {
 						continue;
 					}
+					//是否是Aspect 标记的bean交个 这个方法判断,这个会判断所有的父类
 					if (this.advisorFactory.isAspect(beanType)) {
+						//
 						aspectNames.add(beanName);
+						//获取aspectJ相关的信息
 						AspectMetadata amd = new AspectMetadata(beanType, beanName);
 						if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
 							MetadataAwareAspectInstanceFactory factory =
 									new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+
+							//解析标注  aspectJ注解中的增强方法
 							List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
 							if (this.beanFactory.isSingleton(beanName)) {
+								//放入缓存中
 								this.advisorsCache.put(beanName, classAdvisors);
 							}
 							else {

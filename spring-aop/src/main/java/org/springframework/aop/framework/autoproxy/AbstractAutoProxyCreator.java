@@ -315,6 +315,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 	 * Create a proxy with the configured interceptors if the bean is
 	 * identified as one to proxy by the subclass.
 	 * @see #getAdvicesAndAdvisorsForBean
+	 *
+	 * 每个bean都会调用这个方法哦,进而生成我们所需要的代理bean
 	 */
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (bean != null) {
@@ -363,9 +365,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 		}
 
 		// 如果存在增强方法则创建代理
+		// Create proxy if we have advice.
+		//获取bean所应用的所有切面
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			//创建代理
 			Object proxy = createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
@@ -451,9 +456,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyConfig
 	 * already pre-configured to access the bean
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
+	 *
+	 * 这个方法我们就不需要过多的去了解了，解释使用  ProxyFactory  根据 advisor 来生成代理的逻辑我们前面已经分析过了
 	 */
 	protected Object createProxy(
 			Class<?> beanClass, String beanName, Object[] specificInterceptors, TargetSource targetSource) {
+
 
 		ProxyFactory proxyFactory = new ProxyFactory();
 		// Copy our properties (proxyTargetClass etc) inherited from ProxyConfig.
